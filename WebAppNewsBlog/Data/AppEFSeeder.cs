@@ -3,7 +3,9 @@ using Bogus.DataSets;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Data;
+using WebAppNewsBlog.Constants;
 using WebAppNewsBlog.Data.Entities;
+using WebAppNewsBlog.Data.Entities.Identity;
 using WebAppNewsBlog.Helpers;
 
 namespace WebAppNewsBlog.Data
@@ -18,6 +20,39 @@ namespace WebAppNewsBlog.Data
                 var context = service.GetRequiredService<AppEFContext>();
 
                 context.Database.Migrate();
+
+                var userManager = scope.ServiceProvider
+                    .GetRequiredService<UserManager<UserEntity>>();
+
+                var roleManager = scope.ServiceProvider
+                    .GetRequiredService<RoleManager<RoleEntity>>();
+
+                if (!context.Roles.Any())
+                {
+                    foreach (var role in Roles.All)
+                    {
+                        var result = roleManager.CreateAsync(new RoleEntity
+                        {
+                            Name = role
+                        }).Result;
+                    }
+                }
+
+                if (!context.Users.Any())
+                {
+                    var user = new UserEntity
+                    {
+                        FirstName = "Admin",
+                        LastName = "Admin",
+                        Email = "admin@gmail.com",
+                        UserName = "admin@gmail.com"
+                    };
+                    var result = userManager.CreateAsync(user, "123456").Result;
+                    if (result.Succeeded)
+                    {
+                        result = userManager.AddToRoleAsync(user, Roles.Admin).Result;
+                    }
+                }
 
                 if (!context.Categories.Any())
                 {

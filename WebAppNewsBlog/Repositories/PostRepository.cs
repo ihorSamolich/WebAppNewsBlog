@@ -16,7 +16,8 @@ namespace WebAppNewsBlog.Repositories
 
         public PostEntity Add(PostEntity entity)
         {
-            throw new NotImplementedException();
+            _context.Posts.Add(entity);
+            return entity;
         }
 
         public int Count()
@@ -39,6 +40,17 @@ namespace WebAppNewsBlog.Repositories
                     .OrderByDescending(p => p.PostedOn);
         }
 
+        public IQueryable<PostEntity> GetByCategory(string slug)
+        {
+            return
+               _context.Posts
+                   .Include(p => p.Category)
+                   .Include(p => p.PostTags)
+                       .ThenInclude(t => t.Tag)
+                   .Where(p => p.Category.UrlSlug == slug)
+                   .OrderByDescending(p => p.PostedOn);
+        }
+
         public PostEntity GetById(int id)
         {
             return
@@ -56,6 +68,29 @@ namespace WebAppNewsBlog.Repositories
                      .Where(p => p.UrlSlug == slug)
                      .SingleOrDefault();
         }
+
+        public IQueryable<PostEntity> GetByTags(string slug)
+        {
+            return
+              _context.Posts
+                  .Include(p => p.Category)
+                  .Include(p => p.PostTags)
+                      .ThenInclude(t => t.Tag)
+                  .Where(p => p.PostTags.Any(t => t.Tag.Name.ToLower() == slug.ToLower()))
+                  .OrderByDescending(p => p.PostedOn);
+        }
+
+        public IQueryable<PostEntity> GetLatest(int count)
+        {
+            return
+                _context.Posts
+                    .Include(p => p.Category)
+                    .Include(p => p.PostTags)
+                        .ThenInclude(t => t.Tag)
+                    .OrderByDescending(p => p.PostedOn)
+                    .Take(count);
+        }
+
         public void Save()
         {
             _context.SaveChanges();

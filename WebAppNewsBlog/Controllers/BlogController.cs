@@ -1,5 +1,7 @@
 using AutoMapper;
 using Microsoft.AspNetCore.Mvc;
+using WebAppNewsBlog.Data.Entities;
+using WebAppNewsBlog.Helpers;
 using WebAppNewsBlog.Interfaces.Repository;
 using WebAppNewsBlog.Models.Category;
 using WebAppNewsBlog.Models.Post;
@@ -49,12 +51,66 @@ namespace WebAppNewsBlog.Controllers
             return Ok(posts);
         }
 
+        [HttpGet("posts/latest")]
+        public IActionResult GetLatestPosts()
+        {
+            var posts = _mapper.Map<List<PostViewModel>>(_postRepository.GetLatest(5));
+
+            return Ok(posts);
+        }
+
         [HttpGet("post/{slug}")]
         public IActionResult GetSinglePost(string slug)
         {
             var post = _mapper.Map<PostViewModel>(_postRepository.GetBySlug(slug));
 
             return Ok(post);
+        }
+
+        [HttpGet("category/{slug}")]
+        public IActionResult GetSingleCategory(string slug)
+        {
+            var category = _mapper.Map<CategoryViewModel>(_categoryRepository.GetBySlug(slug));
+
+            return Ok(category);
+        }
+
+        [HttpGet("tag/{slug}")]
+        public IActionResult GetSingleTag(string slug)
+        {
+            var tag = _mapper.Map<TagViewModel>(_tagRepository.GetBySlug(slug));
+
+            return Ok(tag);
+        }
+
+        [HttpGet("category/{slug}/posts")]
+        public IActionResult GetCategoryPosts(string slug)
+        {
+            var posts = _mapper.Map<List<PostViewModel>>(_postRepository.GetByCategory(slug));
+
+            return Ok(posts);
+        }
+
+        [HttpGet("tag/{slug}/posts")]
+        public IActionResult GetTagPosts(string slug)
+        {
+            var posts = _mapper.Map<List<PostViewModel>>(_postRepository.GetByTags(slug));
+
+            return Ok(posts);
+        }
+
+        [HttpPost("posts")]
+        public IActionResult CreatePost(CreatePostViewModel model)
+        {
+            var post = _mapper.Map<PostEntity>(model);
+            post.PostedOn = DateTime.UtcNow;
+            post.UrlSlug = UrlSlugMaker.GenerateSlug(model.Title);
+            post.Published = true;
+
+            var newPost = _postRepository.Add(post);
+            _postRepository.Save();
+
+            return Ok(newPost);
         }
 
     }

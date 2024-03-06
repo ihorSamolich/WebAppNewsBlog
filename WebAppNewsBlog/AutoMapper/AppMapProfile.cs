@@ -18,6 +18,8 @@ namespace WebAppNewsBlog.AutoMapper
             CreateMap<TagEntity, TagViewModel>();
             CreateMap<PostEntity, PostViewModel>()
                 .ForMember(dest => dest.Tags, opt => opt.MapFrom(src => src.PostTags.Select(pt => pt.Tag).ToList()));
+
+            CreateMap<CreatePostViewModel, PostEntity>();
         }
     }
 }

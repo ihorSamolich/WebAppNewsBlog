@@ -29,7 +29,8 @@ namespace WebAppNewsBlog.Repositories
 
         public IQueryable<TagEntity> GetAll()
         {
-            return _context.Tags;
+            return _context.Tags
+                .OrderBy(t => t.Name);
         }
 
         public TagEntity GetById(int id)

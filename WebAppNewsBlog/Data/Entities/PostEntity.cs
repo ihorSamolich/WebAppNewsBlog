@@ -12,13 +12,13 @@ namespace WebAppNewsBlog.Data.Entities
         [Required, StringLength(255)]
         public string Title { get; set; }
 
-        [StringLength(1000)]
+        [StringLength(5000)]
         public string ShortDescription { get; set; }
 
-        [StringLength(5000)]
+        [Required]
         public string Description { get; set; }
 
-        [Required, StringLength(1000)]
+        [Required, StringLength(5000)]
         public string Meta { get; set; }
 
         [Required, StringLength(255)]
