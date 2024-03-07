@@ -40,6 +40,15 @@ namespace WebAppNewsBlog.Repositories
                      .Where(p => p.Id == id)
                      .SingleOrDefault();
         }
+
+        public TagEntity GetByName(string name)
+        {
+            return
+                _context.Tags
+                     .Where(p => p.Name == name)
+                     .FirstOrDefault();
+        }
+
         public TagEntity GetBySlug(string slug)
         {
             return

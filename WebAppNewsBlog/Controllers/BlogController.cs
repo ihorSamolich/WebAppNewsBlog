@@ -6,6 +6,7 @@ using WebAppNewsBlog.Interfaces.Repository;
 using WebAppNewsBlog.Models.Category;
 using WebAppNewsBlog.Models.Post;
 using WebAppNewsBlog.Models.Tag;
+using WebAppNewsBlog.Repositories;
 
 namespace WebAppNewsBlog.Controllers
 {
@@ -17,14 +18,16 @@ namespace WebAppNewsBlog.Controllers
         private readonly IPostRepository _postRepository;
         private readonly ICategoryRepository _categoryRepository;
         private readonly ITagRepository _tagRepository;
+        private readonly IPostTagRepository _postTagRepository;
 
 
-        public BlogController(IMapper mapper, IPostRepository postRepository, ICategoryRepository categoryRepository, ITagRepository tagRepository)
+        public BlogController(IMapper mapper, IPostRepository postRepository, ICategoryRepository categoryRepository, ITagRepository tagRepository, IPostTagRepository postTagRepository)
         {
             _mapper = mapper;
             _postRepository = postRepository;
             _categoryRepository = categoryRepository;
             _tagRepository = tagRepository;
+            _postTagRepository = postTagRepository;
         }
 
         [HttpGet("categories")]
@@ -102,16 +105,49 @@ namespace WebAppNewsBlog.Controllers
         [HttpPost("posts")]
         public IActionResult CreatePost(CreatePostViewModel model)
         {
-            var post = _mapper.Map<PostEntity>(model);
-            post.PostedOn = DateTime.UtcNow;
-            post.UrlSlug = UrlSlugMaker.GenerateSlug(model.Title);
-            post.Published = true;
+            try
+            {
+                var existingPost = _postRepository.GetAll().FirstOrDefault(p => p.Title == model.Title);
 
-            var newPost = _postRepository.Add(post);
-            _postRepository.Save();
+                if (existingPost != null)
+                {
+                    return BadRequest("A post with the same title already exists.");
+                }
 
-            return Ok(newPost);
+
+                var post = _mapper.Map<PostEntity>(model);
+                post.PostedOn = DateTime.UtcNow;
+                post.UrlSlug = UrlSlugMaker.GenerateSlug(model.Title);
+                post.Published = true;
+
+                var newPost = _postRepository.Add(post);
+
+
+                _postRepository.Save();
+
+                if (model.Tags != null)
+                {
+                    foreach (var tag in model.Tags)
+                    {
+                        PostTagMapEntity tagEntity = new PostTagMapEntity()
+                        {
+                            PostId = newPost.Id,
+                            TagId = _tagRepository.GetByName(tag).Id
+                        };
+
+                        _postTagRepository.Add(tagEntity);
+                    }
+                    _postTagRepository.Save();
+                }
+
+                var result = _mapper.Map<PostViewModel>(_postRepository.GetBySlug(newPost.UrlSlug));
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal Server Error: {ex.Message}");
+            }
         }
-
     }
 }
